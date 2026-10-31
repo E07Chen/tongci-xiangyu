@@ -5,7 +5,7 @@ const crypto = require('crypto');
 const { WebSocketServer } = require('./ws-lite');
 
 const PORT = process.env.PORT || 3000;
-const INDEX = path.join(__dirname, 'public', 'index.html');
+const INDEX = path.join(__dirname, 'index.html');
 const MAX_PLAYERS = 6;
 const MAX_WORD_LEN = 20;
 
