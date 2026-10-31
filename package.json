@@ -1,0 +1,8 @@
+{
+  "name": "tongci-xiangyu",
+  "version": "1.0.0",
+  "description": "同词相遇 - 和朋友玩的默契小游戏",
+  "main": "server.js",
+  "scripts": { "start": "node server.js" },
+  "engines": { "node": ">=18" }
+}

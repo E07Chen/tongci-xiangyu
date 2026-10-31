@@ -1,0 +1,374 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>同词相遇</title>
+<style>
+  :root{
+    --bg1:#fbfaff; --bg2:#f1fbf9;
+    --ink:#5a4a8a; --muted:#8c8aa0; --line:#e4e1f2;
+    --c0-bg:#e6e3fa; --c0-ink:#6a58b0;   /* 紫 */
+    --c1-bg:#d6f0ed; --c1-ink:#3f958f;   /* 青 */
+    --c2-bg:#fde4ee; --c2-ink:#c0577f;   /* 粉 */
+    --c3-bg:#fdecd6; --c3-ink:#c0803a;   /* 橙 */
+    --c4-bg:#dcebfc; --c4-ink:#3f78b8;   /* 蓝 */
+    --c5-bg:#e2f3d9; --c5-ink:#5b9a3f;   /* 绿 */
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;min-height:100%}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+    color:var(--ink);
+    background:linear-gradient(180deg,var(--bg1) 0%,#fff 45%,var(--bg2) 100%);
+    background-attachment:fixed;
+    padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom);
+  }
+  .wrap{max-width:560px;margin:0 auto;padding:22px 18px 40px}
+  .brand{font-size:20px;font-weight:700;letter-spacing:1px}
+  h1{font-size:30px;text-align:center;margin:30px 0 10px;font-weight:800}
+  .sub{text-align:center;color:#5d5a73;font-size:17px;margin:6px 0}
+  .meta{text-align:center;color:var(--muted);font-size:15px;margin:10px 0 26px}
+
+  /* 首页 / 大厅 */
+  .card{background:#fff;border:1px solid var(--line);border-radius:18px;padding:20px;box-shadow:0 6px 24px rgba(106,88,176,.08)}
+  label{display:block;font-size:14px;color:var(--muted);margin:0 0 8px}
+  input[type=text]{
+    width:100%;font-size:18px;padding:14px 16px;border-radius:14px;border:1.5px solid var(--line);
+    background:#fbfbff;color:var(--ink);outline:none;font-family:inherit;
+  }
+  input[type=text]:focus{border-color:var(--c0-ink);background:#fff}
+  .btn{
+    width:100%;border:0;border-radius:14px;padding:15px;font-size:18px;font-weight:700;font-family:inherit;
+    cursor:pointer;color:#fff;background:var(--c0-ink);transition:transform .08s,opacity .2s;
+  }
+  .btn:active{transform:scale(.98)}
+  .btn[disabled]{opacity:.45;cursor:not-allowed}
+  .btn.teal{background:var(--c1-ink)}
+  .btn.ghost{background:var(--c0-bg);color:var(--c0-ink)}
+  .row{display:flex;gap:10px}
+  .gap{height:14px}
+  .or{text-align:center;color:var(--muted);font-size:14px;margin:18px 0}
+  .code-in{text-transform:uppercase;letter-spacing:4px;text-align:center}
+  .err{color:#d0435f;text-align:center;font-size:14px;min-height:20px;margin-top:12px}
+
+  .roomcode{
+    text-align:center;font-size:40px;letter-spacing:8px;font-weight:800;color:var(--ink);margin:8px 0 4px;
+    padding-left:8px;
+  }
+  .hint{text-align:center;color:var(--muted);font-size:14px}
+  .players{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin:22px 0}
+  .pill{padding:10px 16px;border-radius:999px;font-weight:700;font-size:16px}
+  .pill.off{opacity:.4}
+
+  /* 对局 */
+  .rounds{margin-top:6px}
+  .rl{font-size:14px;color:var(--muted);margin:18px 0 8px;letter-spacing:1px}
+  .pair{display:flex;align-items:center;gap:8px}
+  .chip{
+    flex:1;min-width:0;text-align:center;padding:15px 8px;border-radius:12px;font-size:19px;font-weight:700;
+    word-break:break-all;line-height:1.25;box-shadow:0 1px 3px rgba(0,0,0,.05);
+  }
+  .chip.wait{font-weight:500;font-size:16px;opacity:.75}
+  .mark{color:#b3b0c6;font-size:18px;flex:none;width:16px;text-align:center}
+  .mark.ok{color:var(--c1-ink);font-weight:800}
+  .c0{background:var(--c0-bg);color:var(--c0-ink)}
+  .c1{background:var(--c1-bg);color:var(--c1-ink)}
+  .c2{background:var(--c2-bg);color:var(--c2-ink)}
+  .c3{background:var(--c3-bg);color:var(--c3-ink)}
+  .c4{background:var(--c4-bg);color:var(--c4-ink)}
+  .c5{background:var(--c5-bg);color:var(--c5-ink)}
+
+  .input-area{margin-top:6px}
+  .names{display:flex;gap:8px;font-size:13px;color:var(--muted);margin-bottom:6px;padding:0 4px}
+  .names span{flex:1;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .names i{width:16px;flex:none}
+
+  .pair.cur .chip.me{padding:0;background:#fff;border:2px solid currentColor}
+  .pair.cur .chip.me input{
+    width:100%;border:0;background:transparent;text-align:center;font-size:19px;font-weight:700;
+    color:inherit;padding:14px 8px;outline:none;font-family:inherit;border-radius:12px;
+  }
+  .pair.cur .chip.me input::placeholder{color:inherit;opacity:.4;font-weight:500}
+  .send{margin-top:16px}
+  .tip{text-align:center;color:var(--muted);font-size:14px;margin-top:12px;min-height:20px}
+
+  .footer-btns{margin-top:30px;display:flex;flex-direction:column;gap:12px}
+  .toast{
+    position:fixed;left:50%;bottom:40px;transform:translateX(-50%);background:#3b3560;color:#fff;
+    padding:10px 18px;border-radius:999px;font-size:14px;opacity:0;pointer-events:none;transition:opacity .25s;
+    z-index:10;max-width:90%;
+  }
+  .toast.show{opacity:1}
+  .conn{position:fixed;top:0;left:0;right:0;background:#d0435f;color:#fff;text-align:center;font-size:13px;padding:4px;display:none;z-index:9}
+  .hidden{display:none!important}
+
+  @keyframes pop{from{transform:scale(.92);opacity:0}to{transform:scale(1);opacity:1}}
+  .pair.new{animation:pop .3s ease}
+  @keyframes bob{0%,100%{opacity:.4}50%{opacity:1}}
+  .dots{animation:bob 1.2s infinite}
+</style>
+</head>
+<body>
+<div class="conn" id="conn">连接中断，正在重连…</div>
+<div class="wrap" id="app"></div>
+<div class="toast" id="toast"></div>
+
+<script>
+(() => {
+  const $app = document.getElementById('app');
+  const $toast = document.getElementById('toast');
+  const $conn = document.getElementById('conn');
+  const LS = window.localStorage;
+
+  let ws = null, state = null, connected = false, wantRoom = null, pingTimer = null;
+  let draftWord = '';
+  let screen = 'home';           // home | room
+  let errMsg = '';
+  let lastHistoryLen = 0;
+
+  const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const getName = () => LS.getItem('tc_name') || '';
+  function toast(msg){
+    $toast.textContent = msg; $toast.classList.add('show');
+    clearTimeout(toast.t); toast.t = setTimeout(()=>$toast.classList.remove('show'), 2200);
+  }
+
+  /* ---------- 网络 ---------- */
+  function connect(){
+    const proto = location.protocol === 'https:' ? 'wss' : 'ws';
+    ws = new WebSocket(proto + '://' + location.host);
+    ws.onopen = () => {
+      connected = true; $conn.style.display = 'none';
+      clearInterval(pingTimer);
+      pingTimer = setInterval(()=>send({t:'ping'}), 25000);
+      // 自动重连回房间
+      const code = LS.getItem('tc_room'), token = LS.getItem('tc_token');
+      if (wantRoom){ send(wantRoom); wantRoom = null; }
+      else if (code && token){ send({t:'join', code, token, name:getName()}); }
+    };
+    ws.onclose = () => {
+      connected = false; clearInterval(pingTimer);
+      if (screen === 'room') $conn.style.display = 'block';
+      setTimeout(connect, 1500);
+    };
+    ws.onmessage = ev => {
+      const m = JSON.parse(ev.data);
+      if (m.t === 'joined'){
+        LS.setItem('tc_room', m.code); LS.setItem('tc_token', m.token);
+        screen = 'room'; errMsg = '';
+      } else if (m.t === 'state'){
+        const prev = state;
+        state = m; screen = 'room';
+        if (!prev || prev.round !== m.round || prev.phase !== m.phase) draftWord = '';
+        history.replaceState(null, '', '#' + m.code);
+        render();
+        return;
+      } else if (m.t === 'error'){
+        errMsg = m.msg;
+        if (m.fatal){ LS.removeItem('tc_room'); LS.removeItem('tc_token'); screen='home'; state=null; }
+        toast(m.msg);
+      }
+      render();
+    };
+  }
+  function send(o){ if (ws && ws.readyState === 1) ws.send(JSON.stringify(o)); }
+
+  /* ---------- 视图 ---------- */
+  function render(){
+    const active = document.activeElement;
+    const keepFocus = active && active.id === 'word';
+    const sel = keepFocus ? [active.selectionStart, active.selectionEnd] : null;
+
+    if (screen === 'home' || !state) $app.innerHTML = viewHome();
+    else if (state.phase === 'lobby') $app.innerHTML = viewLobby();
+    else if (state.phase === 'playing') $app.innerHTML = viewPlaying();
+    else $app.innerHTML = viewDone();
+    bind();
+
+    if (keepFocus){
+      const el = document.getElementById('word');
+      if (el){ el.focus(); try{ el.setSelectionRange(...sel);}catch(e){} }
+    }
+    if (state) lastHistoryLen = state.history.length;
+  }
+
+  function viewHome(){
+    const hashCode = (location.hash || '').replace('#','').toUpperCase();
+    return `
+      <div class="brand">同词相遇</div>
+      <h1>你们的脑回路<br>能相遇吗？</h1>
+      <div class="sub">每人每轮写一个词，直到大家写出同一个</div>
+      <div class="meta">2 – 6 人 · 开房间发给朋友就能玩</div>
+      <div class="card">
+        <label>你的昵称</label>
+        <input type="text" id="name" maxlength="10" placeholder="例如：小明" value="${esc(getName())}" autocomplete="off">
+        <div class="gap"></div>
+        <button class="btn" id="create">创建房间</button>
+        <div class="or">— 或者加入朋友的房间 —</div>
+        <input type="text" id="code" class="code-in" maxlength="6" placeholder="房间号" value="${esc(hashCode)}" autocomplete="off">
+        <div class="gap"></div>
+        <button class="btn teal" id="join">加入房间</button>
+        <div class="err">${esc(errMsg)}</div>
+      </div>`;
+  }
+
+  function playersPills(){
+    return `<div class="players">${state.players.map(p =>
+      `<div class="pill c${p.color} ${p.online?'':'off'}">${esc(p.name)}${p.host?' 👑':''}</div>`).join('')}</div>`;
+  }
+
+  function viewLobby(){
+    const me = state.players[state.meIndex];
+    const isHost = me && me.host;
+    return `
+      <div class="brand">同词相遇</div>
+      <h1>等朋友加入</h1>
+      <div class="hint">把房间号或链接发给朋友</div>
+      <div class="roomcode">${state.code}</div>
+      <div class="gap"></div>
+      <div class="row">
+        <button class="btn ghost" id="copycode">复制房间号</button>
+        <button class="btn ghost" id="copylink">复制邀请链接</button>
+      </div>
+      ${playersPills()}
+      <div class="hint">${state.players.length} / 6 人</div>
+      <div class="footer-btns">
+        ${isHost
+          ? `<button class="btn" id="start" ${state.players.length<2?'disabled':''}>开始游戏</button>`
+          : `<div class="hint">等待房主开始…</div>`}
+        <button class="btn ghost" id="leave">离开房间</button>
+      </div>`;
+  }
+
+  function roundRow(label, cells, ok, isNew){
+    return `
+      <div class="rl">${label}</div>
+      <div class="pair ${isNew?'new':''}">
+        ${cells.map((c,i)=>`${i?`<span class="mark ${ok?'ok':''}">${ok?'✓':'×'}</span>`:''}<div class="chip c${c.color}">${esc(c.word)}</div>`).join('')}
+      </div>`;
+  }
+
+  function historyHtml(withLastNew){
+    return state.history.map((r,i)=>{
+      const last = i === state.history.length - 1;
+      const ok = state.phase==='done' && last;
+      return roundRow('第 '+(i+1)+' 轮', r, ok, withLastNew && last && state.history.length>lastHistoryLen);
+    }).join('');
+  }
+
+  function viewPlaying(){
+    const me = state.players[state.meIndex];
+    const submitted = me && me.submitted;
+    const waiting = state.players.filter(p=>!p.submitted && p.online).map(p=>p.name);
+    const cur = state.players.map((p,i)=>{
+      if (i === state.meIndex){
+        return submitted
+          ? `<div class="chip c${p.color}">${esc(state.myWord||'')}</div>`
+          : `<div class="chip me c${p.color}"><input id="word" type="text" maxlength="20" placeholder="写下你想到的词" value="${esc(draftWord)}" autocomplete="off"></div>`;
+      }
+      return p.submitted
+        ? `<div class="chip wait c${p.color}">已提交 ✓</div>`
+        : `<div class="chip wait c${p.color}"><span class="dots">思考中…</span></div>`;
+    });
+    return `
+      <div class="brand">同词相遇</div>
+      <h1 style="font-size:24px;margin:20px 0 4px">第 ${state.round} 轮</h1>
+      <div class="hint" style="margin-bottom:14px">房间 ${state.code}</div>
+      <div class="names">${state.players.map((p,i)=>`${i?'<i></i>':''}<span>${esc(p.name)}${i===state.meIndex?'（你）':''}</span>`).join('')}</div>
+      <div class="rounds">
+        ${historyHtml(true)}
+        <div class="rl">第 ${state.round} 轮</div>
+        <div class="pair cur">${cur.map((c,i)=>(i?'<span class="mark">×</span>':'')+c).join('')}</div>
+      </div>
+      ${submitted ? '' : `<button class="btn send" id="submit">提交</button>`}
+      <div class="tip">${submitted
+        ? (waiting.length ? '等待 '+esc(waiting.join('、'))+' …' : '')
+        : '想想大家都会写什么，向彼此靠近！'}</div>
+      <div class="footer-btns"><button class="btn ghost" id="leave">离开房间</button></div>`;
+  }
+
+  function fmtDate(ts){
+    const d = new Date(ts||Date.now());
+    return d.getFullYear()+'/'+String(d.getMonth()+1).padStart(2,'0')+'/'+String(d.getDate()).padStart(2,'0');
+  }
+
+  function viewDone(){
+    const me = state.players[state.meIndex];
+    const n = state.history.length;
+    return `
+      <div class="brand">同词相遇</div>
+      <h1>你们的脑回路相遇了</h1>
+      <div class="sub">用了 ${n} 轮，我们都想到了「${esc(state.winWord)}」</div>
+      <div class="meta">房间 ${state.code} · 共 ${n} 轮 · ${fmtDate(state.finishedAt)}</div>
+      <div class="rounds">${historyHtml(false)}</div>
+      <div class="footer-btns">
+        <button class="btn" id="again">再来一局</button>
+        <button class="btn ghost" id="leave">离开房间</button>
+      </div>`;
+  }
+
+  /* ---------- 事件 ---------- */
+  function bind(){
+    const $ = id => document.getElementById(id);
+    if ($('create')) $('create').onclick = () => {
+      const name = $('name').value.trim();
+      if (!name){ errMsg='请先填写昵称'; return render(); }
+      LS.setItem('tc_name', name);
+      LS.removeItem('tc_room'); LS.removeItem('tc_token');
+      send({t:'create', name});
+    };
+    if ($('join')) $('join').onclick = () => {
+      const name = $('name').value.trim();
+      const code = $('code').value.trim().toUpperCase();
+      if (!name){ errMsg='请先填写昵称'; return render(); }
+      if (code.length < 4){ errMsg='请输入房间号'; return render(); }
+      LS.setItem('tc_name', name);
+      LS.removeItem('tc_token'); LS.removeItem('tc_room');
+      send({t:'join', code, name});
+    };
+    if ($('code')) $('code').oninput = e => { e.target.value = e.target.value.toUpperCase(); };
+    if ($('start')) $('start').onclick = () => send({t:'start'});
+    if ($('again')) $('again').onclick = () => send({t:'again'});
+    if ($('leave')) $('leave').onclick = () => {
+      if (!confirm('确定离开房间吗？')) return;
+      send({t:'leave'});
+      LS.removeItem('tc_room'); LS.removeItem('tc_token');
+      state = null; screen = 'home'; history.replaceState(null,'',location.pathname);
+      render();
+    };
+    if ($('copycode')) $('copycode').onclick = () => copy(state.code, '房间号已复制');
+    if ($('copylink')) $('copylink').onclick = () =>
+      copy(location.origin + location.pathname + '#' + state.code, '邀请链接已复制');
+    const w = $('word');
+    if (w){
+      w.oninput = e => { draftWord = e.target.value; };
+      w.onkeydown = e => { if (e.key === 'Enter' && !e.isComposing) doSubmit(); };
+      if (!state.players[state.meIndex].submitted && document.activeElement !== w) {
+        // 不强制弹键盘，避免手机端打断
+      }
+    }
+    if ($('submit')) $('submit').onclick = doSubmit;
+  }
+  function doSubmit(){
+    const v = (draftWord || '').trim();
+    if (!v) return toast('先写一个词吧');
+    send({t:'submit', word:v});
+  }
+  function copy(text, msg){
+    const done = () => toast(msg);
+    if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(text).then(done, fallback);
+    else fallback();
+    function fallback(){
+      const ta = document.createElement('textarea'); ta.value = text; document.body.appendChild(ta);
+      ta.select(); try{ document.execCommand('copy'); done(); }catch(e){ toast('请手动复制：'+text); }
+      ta.remove();
+    }
+  }
+
+  render();
+  connect();
+})();
+</script>
+</body>
+</html>
